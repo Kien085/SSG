@@ -11,16 +11,16 @@ parser.add_argument('--mode', type=str,  default='sen',
 
 opt = parser.parse_args()
 if opt.mode == 'sen':
-    sg_dict = np.load('spice_sg_dict2.npz')['spice_dict'][()]
+    sg_dict = np.load('data/spice_sg_dict2.npz',allow_pickle=True)['spice_dict'][()]
     sg_dict = sg_dict['ix_to_word']
-    folder = 'coco_spice_sg2/'
+    folder = 'data/coco_spice_sg2/'
 else:
-    sg_dict = np.load('coco_pred_sg_rela.npy')[()]
+    sg_dict = np.load('data/coco_pred_sg_rela.npy',allow_pickle=True)[()]
     sg_dict = sg_dict['i2w']
-    folder = 'coco_img_sg/'
+    folder = 'data/coco_img_sg/'
 
 sg_path = folder + opt.id + '.npy'
-sg_use = np.load(sg_path)[()]
+sg_use = np.load(sg_path,allow_pickle=True)[()]
 if opt.mode == 'sen':
     rela = sg_use['rela_info']
     obj_attr = sg_use['obj_info']

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# 
+#
 # File Name : bleu.py
 #
 # Description : Wrapper for BLEU scorer.
@@ -8,7 +8,7 @@
 # Last Modified : Thu 19 Mar 2015 09:13:28 PM PDT
 # Authors : Hao Fang <hfang@uw.edu> and Tsung-Yi Lin <tl483@cornell.edu>
 
-from bleu_scorer import BleuScorer
+from .bleu_scorer import BleuScorer
 
 
 class Bleu:
@@ -20,13 +20,13 @@ class Bleu:
 
     def compute_score(self, gts, res):
 
-        assert(gts.keys() == res.keys())
-        imgIds = gts.keys()
+        assert(list(gts.keys()) == list(res.keys()))
+        imgIds = list(gts.keys())
 
         bleu_scorer = BleuScorer(n=self._n)
-        for id in imgIds:
-            hypo = res[id]
-            ref = gts[id]
+        for idx in imgIds:
+            hypo = res[idx]
+            ref = gts[idx]
 
             # Sanity check.
             assert(type(hypo) is list)
@@ -36,9 +36,9 @@ class Bleu:
 
             bleu_scorer += (hypo[0], ref)
 
-        #score, scores = bleu_scorer.compute_score(option='shortest')
-        score, scores = bleu_scorer.compute_score(option='closest', verbose=1)
-        #score, scores = bleu_scorer.compute_score(option='average', verbose=1)
+        # score, scores = bleu_scorer.compute_score(option='shortest')
+        score, scores = bleu_scorer.compute_score(option='closest', verbose=0)
+        # score, scores = bleu_scorer.compute_score(option='average', verbose=1)
 
         # return (bleu, bleu_info)
         return score, scores
