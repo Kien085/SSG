@@ -32,7 +32,7 @@ Utilities for making visualizations.
 """
 
 
-def draw_scene_graph(objs, triples, vocab=None, **kwargs):
+def draw_scene_graph(objs, triples, attributes, vocab=None, **kwargs):
     """
     Use GraphViz to draw a scene graph. If vocab is not passed then we assume
     that objs and triples are python lists containing strings for object and
@@ -95,6 +95,16 @@ def draw_scene_graph(objs, triples, vocab=None, **kwargs):
               next_node_id, o, edge_width, arrow_size, binary_edge_weight)
         ]
         next_node_id += 1
+
+    #Output Attributes
+    lines.append('node [fillcolor="lightseagreen"]')
+    for a,o in attributes:
+        lines += [
+            '%d [label="%s"]' % (next_node_id, a),
+            '%d->%d [penwidth=%f,arrowsize=%f,weight=%f]' % (
+              next_node_id, o, edge_width, arrow_size, binary_edge_weight)
+        ]
+        next_node_id += 1
     lines.append('}')
 
   # Now it gets slightly hacky. Write the graphviz spec to a temporary
@@ -145,6 +155,7 @@ if __name__ == '__main__':
 #   triples = torch.LongTensor(triples)
     objs = []
     triples = []
+    attributes = []
     parser = argparse.ArgumentParser()
     # Input paths
     parser.add_argument('--id', type=str, default='0',
@@ -172,7 +183,12 @@ if __name__ == '__main__':
     N_obj = len(obj_attr)
     for i in range(N_obj):
         if opt.mode == 'sen':
-            objs.append(sg_dict[obj_attr[i][0]])
+            singleObj = sg_dict[obj_attr[i][0]]
+            if len(obj_attr[i]) >= 2:
+                for j in range(len(obj_attr[i])-1):
+                    attr = sg_dict[obj_attr[i][j + 1]]
+                    attributes.append([attr,singleObj])
+            objs.append(singleObj)
         else:
             print('obj #{0}'.format(i), end = ': ')  # maybe it means 'bounding box' but not 'object'
             N_attr = 3
@@ -185,6 +201,10 @@ if __name__ == '__main__':
 
     objsEncode = {s: i for i, s in enumerate(objs)}
 
+    encodedAttr = []
+    for a,o in attributes:
+        encodObj = objsEncode[o]
+        encodedAttr.append([a,encodObj])
 
     for i in range(N_rela):
         obj_idx = 0 if opt.mode == 'sen' else 1
@@ -203,5 +223,5 @@ if __name__ == '__main__':
     #These need to be LongTensors
     #How can I show this image?
     vocab = None
-    image = (plt.imshow(draw_scene_graph(objs, triples, vocab, orientation='V')))
+    image = (plt.imshow(draw_scene_graph(objs, triples, encodedAttr, vocab, orientation='V')))
     plt.show()
