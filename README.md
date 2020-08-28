@@ -7,3 +7,9 @@
 ```
 python show_sg.py --mode sen --id 391895
 ```
+
+To generate the visualization, go into the vis folder, and call
+
+```
+python test.py --mode sen --id 391895
+```

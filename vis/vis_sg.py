@@ -127,101 +127,61 @@ def draw_scene_graph(objs, triples, attributes, vocab=None, **kwargs):
 
 
 if __name__ == '__main__':
-#   o_idx_to_name = ['cat', 'dog', 'hat', 'skateboard']
-#   p_idx_to_name = ['riding', 'wearing', 'on', 'next to', 'above']
-#   o_name_to_idx = {s: i for i, s in enumerate(o_idx_to_name)}
-#   p_name_to_idx = {s: i for i, s in enumerate(p_idx_to_name)}
-#   vocab = {
-#     'object_idx_to_name': o_idx_to_name,
-#     'object_name_to_idx': o_name_to_idx,
-#     'pred_idx_to_name': p_idx_to_name,
-#     'pred_name_to_idx': p_name_to_idx,
-#   }
-
-#   objs = [
-#     'cat',
-#     'cat',
-#     'skateboard',
-#     'hat',
-#   ]
-#   objs = torch.LongTensor([o_name_to_idx[o] for o in objs])
-#   triples = [
-#     [0, 'next to', 1],
-#     [0, 'riding', 2],
-#     [1, 'wearing', 3],
-#     [3, 'above', 2],
-#   ]
-#   triples = [[s, p_name_to_idx[p], o] for s, p, o in triples]
-#   triples = torch.LongTensor(triples)
-    objs = []
-    triples = []
-    attributes = []
-    parser = argparse.ArgumentParser()
-    # Input paths
-    parser.add_argument('--id', type=str, default='0',
-                        help='id of image')
-    parser.add_argument('--mode', type=str,  default='sen',
-                        help='image or sen')
-    opt = parser.parse_args()
-    if opt.mode == 'sen':
-        sg_dict = np.load('../data/spice_sg_dict2.npz', allow_pickle=True)['spice_dict'][()]
-        sg_dict = sg_dict['ix_to_word']
-        folder = '../data/coco_spice_sg2/'
-    else:
-        sg_dict = np.load('coco_pred_sg_rela.npy')[()]
-        sg_dict = sg_dict['i2w']
-        folder = 'coco_img_sg/'
-    sg_path = folder + opt.id + '.npy'
-    sg_use = np.load(sg_path, allow_pickle=True)[()]
-    if opt.mode == 'sen':
+    sg_dict = np.load('../data/spice_sg_dict2.npz', allow_pickle=True)['spice_dict'][()]
+    sg_dict = sg_dict['ix_to_word']
+    folder = '../data/coco_spice_sg2/'
+    for filename in os.listdir("../data/coco_spice_sg2"):
+        imageId = filename.split(".")[0]
+        objs = []
+        triples = []
+        attributes = []
+        # parser = argparse.ArgumentParser()
+        # # Input paths
+        # parser.add_argument('--id', type=str, default='0',
+        #                     help='id of image')
+        # parser.add_argument('--mode', type=str,  default='sen',
+        #                     help='image or sen')
+        # opt = parser.parse_args()
+        sg_path = folder + imageId + '.npy'
+        sg_use = np.load(sg_path, allow_pickle=True)[()]
         rela = sg_use['rela_info']
         obj_attr = sg_use['obj_info']
-    else:
-        rela = sg_use['rela_matrix']
-        obj_attr = sg_use['obj_attr']
-    N_rela = len(rela)
-    N_obj = len(obj_attr)
-    for i in range(N_obj):
-        if opt.mode == 'sen':
+        N_rela = len(rela)
+        N_obj = len(obj_attr)
+        for i in range(N_obj):
             singleObj = sg_dict[obj_attr[i][0]]
             if len(obj_attr[i]) >= 2:
                 for j in range(len(obj_attr[i])-1):
                     attr = sg_dict[obj_attr[i][j + 1]]
                     attributes.append([attr,singleObj])
             objs.append(singleObj)
-        else:
-            print('obj #{0}'.format(i), end = ': ')  # maybe it means 'bounding box' but not 'object'
-            N_attr = 3
-            for j in range(N_attr - 1):
-                print('{0} {1}, '.format(sg_dict[obj_attr[i][j + 4]],\
-                    sg_dict[obj_attr[i][j+1]]), end = '')
-            j = N_attr - 1
-            print('{0} {1}'.format(sg_dict[obj_attr[i][j + 4]],\
-                sg_dict[obj_attr[i][j+1]]))
 
-    objsEncode = {s: i for i, s in enumerate(objs)}
+        objsEncode = {s: i for i, s in enumerate(objs)}
 
-    encodedAttr = []
-    for a,o in attributes:
-        encodObj = objsEncode[o]
-        encodedAttr.append([a,encodObj])
+        encodedAttr = []
+        for a,o in attributes:
+            encodObj = objsEncode[o]
+            encodedAttr.append([a,encodObj])
 
-    for i in range(N_rela):
-        obj_idx = 0 if opt.mode == 'sen' else 1
-        sbj = sg_dict[ int(obj_attr[int(rela[i][0])][obj_idx]) ]
-        obj = sg_dict[ int(obj_attr[int(rela[i][1])][obj_idx]) ]
-        rela_name = sg_dict[rela[i][2]]
-        sbj = objsEncode[sbj]
-        obj = objsEncode[obj]
-        triples.append([sbj,rela_name,obj])
+        for i in range(N_rela):
+            obj_idx = 0
+            sbj = sg_dict[ int(obj_attr[int(rela[i][0])][obj_idx]) ]
+            obj = sg_dict[ int(obj_attr[int(rela[i][1])][obj_idx]) ]
+            rela_name = sg_dict[rela[i][2]]
+            sbj = objsEncode[sbj]
+            obj = objsEncode[obj]
+            triples.append([sbj,rela_name,obj])
 
-    #How to approach:
-    #1: Use the given code in show_sg to add the stuff into a list instead of printing it out
-    #2: How do I use the descriptors? I guess I add it to the object
-    #3: Can easily get the triplets from the show_sg code
-    #It seems like the code does not exactly work for all strings, I need to encode the strings into the numbers?
-    #These need to be LongTensors
-    #How can I show this image?
-    vocab = None
-    image = (plt.imshow(draw_scene_graph(objs, triples, encodedAttr, vocab, orientation='V')))
-    plt.show()
+        #How to approach:
+        #1: Use the given code in show_sg to add the stuff into a list instead of printing it out
+        #2: How do I use the descriptors? I guess I add it to the object
+        #3: Can easily get the triplets from the show_sg code
+        #It seems like the code does not exactly work for all strings, I need to encode the strings into the numbers?
+        #These need to be LongTensors
+        #How can I show this image?
+        vocab = None
+        image = (plt.imshow(draw_scene_graph(objs, triples, encodedAttr, vocab, orientation='V')))
+        savePath = './data/' + imageId + '.png'
+        print(imageId)
+        plt.savefig(savePath)
+        plt.clf()
